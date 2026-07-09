@@ -1,4 +1,5 @@
 using System.Text;
+using System.Linq;
 using MealExpenseTracker.Api.Data;
 using MealExpenseTracker.Api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -56,6 +57,32 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = jwtSettings.Audience,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Secret)),
         ClockSkew = TimeSpan.FromSeconds(30)
+    };
+
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var authHeader = context.Request.Headers.Authorization.ToString();
+
+            if (string.IsNullOrWhiteSpace(authHeader))
+            {
+                return Task.CompletedTask;
+            }
+
+            if (authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+            {
+                context.Token = authHeader["Bearer ".Length..].Trim();
+                return Task.CompletedTask;
+            }
+
+            if (authHeader.Count(c => c == '.') == 2)
+            {
+                context.Token = authHeader.Trim();
+            }
+
+            return Task.CompletedTask;
+        }
     };
 });
 

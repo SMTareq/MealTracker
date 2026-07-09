@@ -58,7 +58,7 @@ public class ExpensesController : ControllerBase
         var expense = new Expense
         {
             UserId = userId,
-            Date = request.Date,
+            Date = request.Date.ToUtc(),
             Category = request.Category,
             Amount = request.Amount,
             Note = request.Note
@@ -87,7 +87,7 @@ public class ExpensesController : ControllerBase
         if (expense is null) return NotFound();
         if (expense.UserId != userId && !User.IsAdmin()) return Forbid();
 
-        expense.Date = request.Date;
+        expense.Date = request.Date.ToUtc();
         expense.Category = request.Category;
         expense.Amount = request.Amount;
         expense.Note = request.Note;

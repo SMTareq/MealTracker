@@ -26,6 +26,9 @@ public class MealResponse
     public DateTime Date { get; set; }
     public decimal Count { get; set; }
     public string? Note { get; set; }
+    public bool IsGuest { get; set; } = false;
+    [Range(0, 10)]
+    public decimal GuestCount { get; set; } = 0;
 }
 
 public class ExpenseCreateRequest

@@ -59,9 +59,12 @@ public class MealsController : ControllerBase
         var meal = new Meal
         {
             UserId = userId,
-            Date = request.Date,
+            Date = request.Date.ToUtc(),
             Count = request.Count,
-            Note = request.Note
+            Note = request.Note,
+            IsGuest = request.IsGuest,
+            GuestCount = request.GuestCount,
+            CreatedAt = DateTime.UtcNow
         };
 
         _db.Meals.Add(meal);
@@ -73,6 +76,8 @@ public class MealsController : ControllerBase
             UserId = meal.UserId,
             Date = meal.Date,
             Count = meal.Count,
+            IsGuest = meal.IsGuest,
+            GuestCount = meal.GuestCount,   
             Note = meal.Note
         });
     }
@@ -86,7 +91,7 @@ public class MealsController : ControllerBase
         if (meal is null) return NotFound();
         if (meal.UserId != userId && !User.IsAdmin()) return Forbid();
 
-        meal.Date = request.Date;
+        meal.Date = request.Date.ToUtc();
         meal.Count = request.Count;
         meal.Note = request.Note;
 
