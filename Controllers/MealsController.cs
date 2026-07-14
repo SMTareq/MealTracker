@@ -44,6 +44,7 @@ public class MealsController : ControllerBase
                 UserId = m.UserId,
                 Date = m.Date,
                 Count = m.Count,
+                GuestCount = m.GuestCount,
                 Note = m.Note
             })
             .ToListAsync();
