@@ -32,11 +32,11 @@ public class ReportsController : ControllerBase
         if (user is null) return NotFound();
 
         var totalMeals = await _db.Meals
-            .Where(m => m.UserId == targetUserId && m.Date.Year == year && m.Date.Month == month)
-            .SumAsync(m => (decimal?)m.Count) ?? 0;
+            .Where(m => m.Date.Year == year && m.Date.Month == month)
+            .SumAsync(m => (decimal?)m.Count + (decimal?)m.GuestCount) ?? 0;
 
         var totalExpense = await _db.Expenses
-            .Where(e => e.UserId == targetUserId && e.Date.Year == year && e.Date.Month == month)
+            .Where(e => e.Date.Year == year && e.Date.Month == month)
             .SumAsync(e => (decimal?)e.Amount) ?? 0;
 
         var mealRate = totalMeals > 0 ? Math.Round(totalExpense / totalMeals, 2) : 0;
@@ -64,15 +64,23 @@ public class ReportsController : ControllerBase
 
         foreach (var user in users)
         {
-            var totalMeals = await _db.Meals
+            var UsertotalMeals = await _db.Meals
                 .Where(m => m.UserId == user.Id && m.Date.Year == year && m.Date.Month == month)
-                .SumAsync(m => (decimal?)m.Count) ?? 0;
+                .SumAsync(m => (decimal?)m.Count + (decimal?)m.GuestCount) ?? 0;
 
-            var totalExpense = await _db.Expenses
+            var UsertotalExpense = await _db.Expenses
                 .Where(e => e.UserId == user.Id && e.Date.Year == year && e.Date.Month == month)
                 .SumAsync(e => (decimal?)e.Amount) ?? 0;
-
-            var mealRate = totalMeals > 0 ? Math.Round(totalExpense / totalMeals, 2) : 0;
+         
+            var totalMeals = await _db.Meals
+                .Where(m => m.Date.Year == year && m.Date.Month == month)
+                .SumAsync(m => (decimal?)m.Count + (decimal?)m.GuestCount) ?? 0;
+    
+            var totalExpense = await _db.Expenses
+                .Where(e => e.Date.Year == year && e.Date.Month == month)
+                .SumAsync(e => (decimal?)e.Amount) ?? 0;
+    
+            var mealRate = totalMeals > 0 ? Math.Round(totalExpense / totalMeals, 2) : 0;    
 
             results.Add(new MonthlySummaryResponse
             {
@@ -80,8 +88,8 @@ public class ReportsController : ControllerBase
                 UserName = user.FullName,
                 Year = year,
                 Month = month,
-                TotalMeals = totalMeals,
-                TotalExpense = totalExpense,
+                TotalMeals = UsertotalMeals,
+                TotalExpense = UsertotalExpense,
                 MealRate = mealRate
             });
         }
