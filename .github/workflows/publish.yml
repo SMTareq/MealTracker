@@ -1,0 +1,49 @@
+name: CI/CD Publish
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-publish:
+    name: Build and Publish API
+    runs-on: self-hosted
+
+    env:
+      DOTNET_NOLOGO: true
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+      DEPLOY_DIR: /mnt/project/GitHub/hostingArea/apipublish
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build application
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Publish application
+        run: dotnet publish MealExpenseTracker.Api.csproj --configuration Release --no-build --output ./publish
+
+      - name: Deploy to local hosting directory
+        run: |
+          mkdir -p "$DEPLOY_DIR"
+          find "$DEPLOY_DIR" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
+          cp -R ./publish/. "$DEPLOY_DIR"/
