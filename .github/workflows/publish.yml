@@ -39,11 +39,8 @@ jobs:
       - name: Build application
         run: dotnet build --configuration Release --no-restore
 
-      - name: Publish application
-        run: dotnet publish MealExpenseTracker.Api.csproj --configuration Release --no-build --output ./publish
-
-      - name: Deploy to local hosting directory
+      - name: Publish application to hosting directory
         run: |
           mkdir -p "$DEPLOY_DIR"
           find "$DEPLOY_DIR" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
-          cp -R ./publish/. "$DEPLOY_DIR"/
+          dotnet publish MealExpenseTracker.Api.csproj --configuration Release --no-build --output "$DEPLOY_DIR"
