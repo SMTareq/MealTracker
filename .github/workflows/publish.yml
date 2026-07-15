@@ -1,4 +1,4 @@
-name: CI/CD Publish
+name: Docker CI/CD Publish
 
 on:
   push:
@@ -13,34 +13,39 @@ on:
 
 permissions:
   contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  build-and-publish:
-    name: Build and Publish API
-    runs-on: self-hosted
-
-    env:
-      DOTNET_NOLOGO: true
-      DOTNET_CLI_TELEMETRY_OPTOUT: true
-      DEPLOY_DIR: /mnt/project/GitHub/hostingArea/apipublish
+  docker-build-and-push:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup .NET 8 SDK
-        uses: actions/setup-dotnet@v4
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
         with:
-          dotnet-version: 8.0.x
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Restore dependencies
-        run: dotnet restore
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
-      - name: Build application
-        run: dotnet build --configuration Release --no-restore
-
-      - name: Publish application to hosting directory
-        run: |
-          mkdir -p "$DEPLOY_DIR"
-          find "$DEPLOY_DIR" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
-          dotnet publish MealExpenseTracker.Api.csproj --configuration Release --no-build --output "$DEPLOY_DIR"
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
